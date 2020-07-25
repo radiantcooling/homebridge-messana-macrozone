@@ -44,7 +44,13 @@ ThermostatMacro.prototype = {
         this.log("[!] Error getting System State: %s", error.message);
         callback(error);
       } else {
-        var json = JSON.parse(responseBody);
+        try{
+          var json = JSON.parse(responseBody);
+        }
+        catch(err){
+          callback(-1);
+          return
+        }
         this.onSystem = (json.status == 0)? false : true
         if(!this.onSystem) {
           this.on = 0
@@ -58,7 +64,13 @@ ThermostatMacro.prototype = {
               this.log("[!] Error getting targetHeatingCoolingState: %s", error.message);
               callback(error);
             } else {
-              var json = JSON.parse(responseBody);
+              try{
+                var json = JSON.parse(responseBody);
+              }
+              catch(err){
+                callback(-1);
+                return
+              }
               this.targetHeatingCoolingState = (json.status) ? 3 : 0;
               // this.log("[*] targetHeatingCoolingState: %s", this.targetHeatingCoolingState);
               callback(null, this.targetHeatingCoolingState);
@@ -105,7 +117,13 @@ ThermostatMacro.prototype = {
         this.log("[!] Error getting currentTemperature: %s", error.message);
         callback(error);
       } else {
-        var json = JSON.parse(responseBody);
+        try{
+          var json = JSON.parse(responseBody);
+        }
+        catch(err){
+          callback(-1);
+          return
+        }
         this.currentTemperature = util.convertF2C(parseFloat(json.value), this.temperatureDisplayUnits)
         callback(null, this.currentTemperature.toFixed(2));
       }
@@ -120,7 +138,13 @@ ThermostatMacro.prototype = {
         this.log("[!] Error getting currentTemperature: %s", error.message);
         callback(error);
       } else {
-        var json = JSON.parse(responseBody);
+        try{
+          var json = JSON.parse(responseBody);
+        }
+        catch(err){
+          callback(-1);
+          return
+        }
         this.targetTemperature = util.convertF2C(json.value, this.temperatureDisplayUnits);
         callback(null, this.targetTemperature.toFixed(2));
       }
