@@ -1,2 +1,2 @@
 # homebridge-messana-macrozone
-Homebridge's plugin for messana macrozone element
+Plugin to install the following accessories: ThermostatMacro
