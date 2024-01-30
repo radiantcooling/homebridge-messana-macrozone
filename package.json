@@ -2,30 +2,30 @@
     "private": false,
     "displayName": "Messana Macrozone",
     "name": "homebridge-messana-macrozone",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "Plugin to install the following accessories: ThermostatMacro",
     "license": "Apache-2.0",
     "repository": {
-      "type": "git",
-      "url": "git://github.com/radiantcooling/homebridge-messana-macrozone.git"
+        "type": "git",
+        "url": "git://github.com/radiantcooling/homebridge-messana-macrozone.git"
     },
     "bugs": {
-      "url": "https://github.com/radiantcooling/homebridge-messana-macrozone/issues"
+        "url": "https://github.com/radiantcooling/homebridge-messana-macrozone/issues"
     },
     "engines": {
-      "node": ">=10.17.0",
-      "homebridge": ">0.4.53"
+        "node": ">=10.17.0",
+        "homebridge": ">0.4.53"
     },
     "main": "dist/index.js",
     "scripts": {},
     "keywords": [
-      "homebridge-plugin"
+        "homebridge-plugin"
     ],
     "dependencies": {},
     "devDependencies": {
-      "homebridge": "^1.1.1"
+        "homebridge": "^1.1.1"
     },
     "models": [
-      "ThermostatMacro"
+        "ThermostatMacro"
     ]
-  }
+}
