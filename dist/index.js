@@ -7,7 +7,7 @@ const util = require('./../util.js')
 module.exports = function(homebridge) {
   Service = homebridge.hap.Service;
   Characteristic = homebridge.hap.Characteristic;
-  homebridge.registerAccessory("messana-macrozone", "ThermostatMacro", ThermostatMacro);
+  homebridge.registerAccessory("homebridge-messana-macrozone", "ThermostatMacro", ThermostatMacro);
 };
 
 function ThermostatMacro(log, config, api) {
