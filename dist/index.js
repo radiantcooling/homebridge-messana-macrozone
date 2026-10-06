@@ -19,8 +19,11 @@ function ThermostatMacro(log, config, api) {
   this.model = packageJSON.models[0];
   this.apiroute = util.staticValues.apiroute
   this.temperatureDisplayUnits = defaultJSON.temperatureUnit || 1;
-  this.maxTemp = 90;
-  this.minTemp = 60;
+  // The setpoint range of the system (dsbase, room SetTempH / SetTempC): 50-104 F.
+  // It was 60-90, narrower than what the system accepts: a room set to 56.5 F
+  // (a wine room) made HomeKit refuse the value at every refresh.
+  this.maxTemp = 104;
+  this.minTemp = 50;
   this.targetTemperature = 25;
   this.currentTemperature = 20;
   this.targetHeatingCoolingState = 3;
@@ -146,6 +149,7 @@ ThermostatMacro.prototype = {
           return
         }
         this.targetTemperature = util.convertF2C(json.value, this.temperatureDisplayUnits);
+        util.fitRange(this.service.getCharacteristic(Characteristic.TargetTemperature), this.targetTemperature);
         callback(null, this.targetTemperature.toFixed(2));
       }
     }.bind(this));
