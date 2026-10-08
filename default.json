@@ -26,6 +26,7 @@
       "getCurrentTemperature": "macrozone/temperature/",
       "getTargetTemperature": "macrozone/setpoint/",
       "setTargetTemperature": "macrozone/setpoint",
+      "getSetpointLimits": "macrozone/limits/",
       "getHumidity": "macrozone/humidity/",
       "setState": "macrozone/status",
       "getState": "macrozone/status/"

@@ -4,6 +4,8 @@ const defaultJSON = require('./../default.json')
 const packageJSON = require('./../package.json')
 const util = require('./../util.js')
 
+const SETPOINT_RANGE_REFRESH_MS = 60 * 1000;
+
 module.exports = function(homebridge) {
   Service = homebridge.hap.Service;
   Characteristic = homebridge.hap.Characteristic;
@@ -25,6 +27,9 @@ function ThermostatMacro(log, config, api) {
   this.maxTemp = 104;
   this.minTemp = 50;
   this.targetTemperature = 25;
+  // False until the setpoint has been read: before that `targetTemperature` is a placeholder
+  // and must not stretch the declared range.
+  this.isTargetRead = false;
   this.currentTemperature = 20;
   this.targetHeatingCoolingState = 3;
   this.heatingCoolingState = 1;
@@ -133,6 +138,39 @@ ThermostatMacro.prototype = {
     }.bind(this));
   },
 
+  // The range HomeKit is told for the setpoint follows the limits of the macrozone (TEC
+  // SetTempMin/Max, heating and cooling), which the backend enforces on every write and an
+  // installer can change at any time. Read once a minute, so a change of the limits reaches
+  // HomeKit with no new config.json and no restart.
+  // The two seasons are joined in one range: the plugin does not know which one the backend
+  // will apply, and a value the season in force refuses is still refused by the backend.
+  // No answer, or a backend without the route: the range stays as it is.
+  updateSetpointRange: function() {
+    var url = this.apiroute + defaultJSON.macrozone.apis.getSetpointLimits + this.id + "?apikey=" + this.apikey;
+    util.httpRequest(url, '', 'GET', function(error, response, responseBody) {
+      if (error) return;
+      var limits;
+      try { limits = JSON.parse(responseBody); } catch (err) { return; }
+      var mins = [Number(limits.minTempH), Number(limits.minTempC)];
+      var maxs = [Number(limits.maxTempH), Number(limits.maxTempC)];
+      if (!mins.concat(maxs).every(isFinite)) return;
+
+      var min = util.convertF2C(Math.min.apply(null, mins), this.temperatureDisplayUnits);
+      var max = util.convertF2C(Math.max.apply(null, maxs), this.temperatureDisplayUnits);
+      // The setpoint in force always fits: HomeKit refuses a value outside the range.
+      if (this.isTargetRead) {
+        min = Math.min(min, Math.floor(this.targetTemperature));
+        max = Math.max(max, Math.ceil(this.targetTemperature));
+      }
+      if (!(min < max)) return;
+
+      var characteristic = this.service.getCharacteristic(Characteristic.TargetTemperature);
+      if (characteristic.props.minValue !== min || characteristic.props.maxValue !== max) {
+        characteristic.setProps({ minValue: min, maxValue: max });
+      }
+    }.bind(this));
+  },
+
   getTargetTemperature: function(callback) {
     // this.log("[+] getTargetTemperature from:", this.apiroute + defaultJSON.macrozone.apis.getTargetTemperature + this.id + "?apikey=" + this.apikey);
     var url = this.apiroute + defaultJSON.macrozone.apis.getTargetTemperature + this.id + "?apikey=" + this.apikey;
@@ -149,6 +187,7 @@ ThermostatMacro.prototype = {
           return
         }
         this.targetTemperature = util.convertF2C(json.value, this.temperatureDisplayUnits);
+        this.isTargetRead = true;
         util.fitRange(this.service.getCharacteristic(Characteristic.TargetTemperature), this.targetTemperature);
         callback(null, this.targetTemperature.toFixed(2));
       }
@@ -234,6 +273,12 @@ ThermostatMacro.prototype = {
           maxValue: util.convertF2C(this.config.max  || this.maxTemp, this.temperatureDisplayUnits),
           minStep: 0.1
         });
+
+    // Not at every refresh of the values: the limits change when an installer changes them,
+    // and on a backend without the snapshot route each read is one more request.
+    this.updateSetpointRange();
+    var rangeTimer = setInterval(this.updateSetpointRange.bind(this), SETPOINT_RANGE_REFRESH_MS);
+    if (rangeTimer.unref) rangeTimer.unref();
 
     setInterval(function() {
 
